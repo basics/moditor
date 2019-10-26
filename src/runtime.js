@@ -1,34 +1,32 @@
-function getFnContent(fn) {
-  let str = fn.toString();
-  const f = str.indexOf('{');
-  const t = str.lastIndexOf('}');
-  str = str.substring(f + 1, t - 1);
 
-  console.log('getFnContent');
-  console.log(str);
-  console.log('\n');
+function buildFactory(obj, target) {
+  return Object.entries(obj).reduce((t, o) => {
+    const key = o[0];
+    const fn = o[1];
+    const content = `return (${fn});`;
+    console.log('content??', key, content);
+    // eslint-disable-next-line no-new-func
+    t[key] = Function(content)();
 
-  return str;
+    // console.log('target??', key, t[key]);
+
+    return t;
+  }, target);
 }
 
-// https://stackoverflow.com/questions/11909934/how-to-pass-functions-to-javascript-web-worker
-// function fn_string(fun) {
-//   const { name } = fun;
-//   const fn = fun.toString();
-//   const headerEnd = fn.indexOf(/\)\s*\{/);
-//   const body = fn.substring(headerEnd, fn.length);
+function buildWorker(obj) {
+  const all = Object.entries(obj).reduce((g, [key, fn]) => {
+    g[key] = fn.toString();
+    return g;
+  }, {});
 
-//   return {
-//     name,
-//     args: fn.substring(fn.indexOf('(') + 1, headerEnd),
-//     body: body.substring(body.indexOf('{') + 1, body.lastIndexOf('}'))
-//   };
-// }
+  const str = JSON.stringify(all, null, '\t');
 
-// function classToFunctions(MyClass) {
-//   const proto = MyClass.prototype;
-
-// }
+  return `
+    const obj = ${str};
+    (${buildFactory})(obj, self);
+  `;
+}
 
 class RunTime {
   constructor(url) {
@@ -63,35 +61,26 @@ class RunTime {
 }
 
 export function runTime(initFn) {
-  const str = getFnContent(initFn);
-
-  function onmessage({ data: { msg, id } }) {
-    // console.log('onmessage', msg, id);
-    self
-      .receivemessage(msg)
-      .then((payload) => {
-        // console.log('receivemessage', msg, '->', payload);
-        self.postMessage({ payload, id });
-      });
+  if (!initFn.receivemessage) {
+    throw new Error('assigned group must have async receivemessage function');
   }
-
-  const test = Babel.transform(onmessage.toString(), { presets: ['es2015'] }).code;
-  console.warn('test', test);
-
-  const str2 = getFnContent((self) => {
-    self.onmessage = ({ data: { msg, id } }) => {
-      // console.log('onmessage', msg, id);
+  const code = {
+    onmessage({ data: { msg, id } }) {
+      console.log('onmessage', msg, id);
       self
         .receivemessage(msg)
         .then((payload) => {
           // console.log('receivemessage', msg, '->', payload);
           self.postMessage({ payload, id });
         });
-    };
-  });
-  const text = `${str} \n ${str2}`;
+    }
+  };
 
-  // console.log(`initWorker "${text}"`)
-  const blob = new Blob([text], { type: 'application/javascript' });
+  const all = { ...initFn, ...code };
+
+  const w = buildWorker(all);
+
+  console.log(`initWorker "${w}"`);
+  const blob = new Blob([w], { type: 'application/javascript' });
   return new RunTime(URL.createObjectURL(blob));
 }
