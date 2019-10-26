@@ -1,7 +1,7 @@
 {
-  "name": "@js-basics/blueprint-npm-module",
-  "version": "1.3.2",
-  "description": "blueprint to create npm modules",
+  "name": "@js-basics/moditor",
+  "version": "0.0.1",
+  "description": "moditor - mobile js editor",
   "main": "./lib/index.js",
   "directories": {
     "example": "examples",
@@ -16,6 +16,7 @@
     "cover": "nyc npx mocha --recursive",
     "lint": "eslint src",
     "build": "cross-env BABEL_ENV=production babel src --out-dir lib && npx rollup --config ./.rolluprc",
+    "build-demo": "cross-env BABEL_ENV=production babel src --out-dir lib",
     "prepare": "npm run clean && npm run test && npm run build",
     "semantic-release": "semantic-release"
   },
@@ -25,18 +26,19 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/basics/blueprint-npm-module.git"
+    "url": "https://github.com/basics/moditor.git"
   },
   "keywords": [
-    "blueprint",
-    "npm",
-    "module"
+    "ace",
+    "editor",
+    "android",
+    "mobile"
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/basics/blueprint-npm-module/issues"
+    "url": "https://github.com/basics/moditor/issues"
   },
-  "homepage": "https://github.com/basics/blueprint-npm-module#readme",
+  "homepage": "https://github.com/basics/moditor#readme",
   "devDependencies": {
     "@babel/cli": "^7.5.5",
     "@babel/core": "^7.5.5",

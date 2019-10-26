@@ -5,7 +5,7 @@ import minify from 'rollup-plugin-babel-minify';
 export default {
   input: 'src/index.js',
   output: {
-    name: 'basics',
+    name: 'basics.moditor',
     file: 'lib/bundle.min.js',
     format: 'umd',
     exports: 'named',
@@ -21,7 +21,7 @@ export default {
     }),
     minify({
       comments: false,
-      banner: '/* vector class - MIT License */',
+      banner: '/* moditor class - MIT License */',
       bannerNewLine: true
     })
   ]
