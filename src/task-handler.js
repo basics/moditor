@@ -37,32 +37,32 @@ export class TaskHandler {
         return run();
       },
 
-      addFile({ src }) {
+      addFile({ path, src }) {
         if (!this.namespace) {
           this.namespace = {};
         }
         console.log('addFile', src);
 
-        const build = Function(src);
-        const script = build();
+        // eslint-disable-next-line no-new-func
+        const build = Function('exports', src);
 
-        const ns = Object.entries(script)
-          .map((arg) => {
-            const fnName = arg[0];
-            const fn = arg[1];
-            this.namespace[fnName] = fn;
-            return fnName;
-          });
+        const exports = {};
+        const script = build(exports);
 
-        return ns;
+        console.log('script loaded', exports);
+
+        this.namespace[path] = exports;
+
+        return Object.keys(exports);
       },
 
-      run({ fnName, fnArgs }) {
-        return iterToPromise(this.namespace[fnName].apply(self, fnArgs));
+      run({ path, fnName, fnArgs }) {
+        const el = this.namespace[path];
+        return iterToPromise(el[fnName].apply(el, fnArgs));
       },
 
       receivemessage({ fnName, fnArgs }) {
-        console.log('Message received from main script', fnName);
+        console.log('Message received from main script', fnName, fnArgs);
         return Promise.resolve(self[fnName].apply(self, fnArgs));
       }
     };
@@ -74,17 +74,22 @@ export class TaskHandler {
     return this.handler.postMessage(msg);
   }
 
-  addFile(src) {
+  addFile(path, input) {
+    // console.log('input? \n', input, '\n');
+    const src = Babel.transform(input, { plugins: ['transform-modules-commonjs'] }).code;
+
+    // console.log('src? \n', src, '\n');
+
     return this.postMessage({
       fnName: 'addFile',
-      fnArgs: [{ src }]
+      fnArgs: [{ path, src }]
     });
   }
 
-  run({ fnName, fnArgs }) {
+  run(path, fnName, fnArgs) {
     return this.postMessage({
       fnName: 'run',
-      fnArgs: [{ fnName, fnArgs }]
+      fnArgs: [{ path, fnName, fnArgs }]
     });
   }
 }

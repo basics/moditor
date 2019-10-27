@@ -30,7 +30,7 @@ function* schachtel(arg) {
   return jeah + ' verpackt, arg: ' + arg;
 }
 
-function* makeAction() {
+export function* makeAction() {
   console.log('start');
   const ms = promiseTimeout(10, 'jeah geil');
   console.log('ms', ms);
@@ -39,19 +39,18 @@ function* makeAction() {
   const s = yield schachtel('cool');
   return jeah + ' alles cool, ' + s;
 }
-
-return { makeAction };
       `;
 
   editor.session.setValue(example);
 
   const handler = new TaskHandler();
 
-  handler.addFile(example)
-    .then((ns) => {
-      handler.run({ fnName: 'makeAction', fnArgs: [] })
-        .then((runRes) => {
-          console.log('runRes', runRes);
-        });
-    });
+  handler.addFile('index.js', example)
+    .then(
+      ns => handler
+        .run('index.js', 'makeAction', [])
+        .then(runRes => console.log('runRes', runRes))
+        .catch(e => console.error(e))
+    )
+    .catch(e => console.error(e));
 });
